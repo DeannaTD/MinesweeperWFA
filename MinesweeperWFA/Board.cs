@@ -4,11 +4,13 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace MinesweeperWFA
 {
     internal class Board
     {
+        static bool started = false;
         int _width, _height;
         public Cell[,] Field { get; set; }
         public int MinesCount { get; set; }
@@ -19,11 +21,54 @@ namespace MinesweeperWFA
             _width = width;
             _height = height;
             Field = new Cell[_width, _height];
-            for(int i = 0; i < _width; i++)
-                for(int j = 0; j < _height; j++)
-                    Field[i, j] = new Cell();
+            for (int i = 0; i < _width; i++)
+                for (int j = 0; j < _height; j++)
+                {
+                    Field[i, j] = new Cell(i, j);
+                    Field[i, j].Click += Board_Click;
+                }
             MinesCount = mines;
-            Initialize(new Point(0,0));
+        }
+
+        private void Board_Click(object sender, EventArgs e)
+        {
+            Cell cell = (Cell)sender;
+            if (!started)
+            {
+                Initialize(new Point(cell.X, cell.Y));
+                started = true;
+            }
+            OpenCellWhileEmpty(cell.X, cell.Y);
+        }
+
+        private void OpenCellWhileEmpty(int i, int j)
+        {
+            Field[i, j].Text = Field[i, j].Value.ToString();
+            Point coordinates = new Point(i, j);
+            Field[i, j].BackColor = Color.Bisque;
+            Field[i, j].State = CellState.Open;
+            if (Field[i,j].Value == -1)
+            {
+                MessageBox.Show("LOSE");
+                return;
+            }
+            if (Field[i, j].Value != 0) return;
+            else
+            {
+                if (coordinates.Y > 0)
+                    if(Field[coordinates.X, coordinates.Y - 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X, coordinates.Y - 1);
+                if (coordinates.X > 0)
+                    if (Field[coordinates.X - 1, coordinates.Y].State != CellState.Open) OpenCellWhileEmpty(coordinates.X - 1, coordinates.Y);
+                if (coordinates.X < _width - 1)
+                    if (Field[coordinates.X + 1, coordinates.Y].State != CellState.Open) OpenCellWhileEmpty(coordinates.X + 1, coordinates.Y);
+                if (coordinates.Y < _height - 1)
+                    if (Field[coordinates.X, coordinates.Y + 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X, coordinates.Y + 1);
+            }
+        }
+
+        private void EndGame()
+        {
+            MessageBox.Show("Gameover");
         }
 
         private void Initialize(Point EmptyPoint)
@@ -39,29 +84,32 @@ namespace MinesweeperWFA
             }
             for (int i = 0; i < _width; i++)
                 for (int j = 0; j < _height; j++)
-                    if(Field[i,j].Value != -1)
+                    if (Field[i, j].Value != -1)
+                    {
                         Field[i, j].Value = GetMinesAround(new Point(i, j));
+                        //Field[i, j].Text = Field[i, j].Value.ToString();
+                    }
         }
 
-        public int GetMinesAround(Point asd)
+        public int GetMinesAround(Point coordinates)
         {
             int mines = 0;
-            if(asd.X > 0 && asd.Y > 0)
-                if (Field[asd.X - 1, asd.Y - 1].Value == -1) mines++;
-            if(asd.Y > 0)
-                if (Field[asd.X, asd.Y - 1].Value == -1) mines++;
-            if(asd.X < _width - 1 && asd.Y > 0)
-                if (Field[asd.X + 1, asd.Y - 1].Value == -1) mines++;
-            if(asd.X > 0)
-                if (Field[asd.X - 1, asd.Y].Value == -1) mines++;
-            if(asd.X < _width - 1)
-                if (Field[asd.X + 1, asd.Y].Value == -1) mines++;
-            if(asd.X > 0 && asd.Y < _height - 1)
-                if (Field[asd.X - 1, asd.Y + 1].Value == -1) mines++;
-            if(asd.Y < _height - 1)
-                if (Field[asd.X, asd.Y + 1].Value == -1) mines++;
-            if(asd.X < _width - 1 && asd.Y < _height - 1)
-                if (Field[asd.X + 1, asd.Y + 1].Value == -1) mines++;
+            if(coordinates.X > 0 && coordinates.Y > 0)
+                if (Field[coordinates.X - 1, coordinates.Y - 1].Value == -1) mines++;
+            if(coordinates.Y > 0)
+                if (Field[coordinates.X, coordinates.Y - 1].Value == -1) mines++;
+            if(coordinates.X < _width - 1 && coordinates.Y > 0)
+                if (Field[coordinates.X + 1, coordinates.Y - 1].Value == -1) mines++;
+            if(coordinates.X > 0)
+                if (Field[coordinates.X - 1, coordinates.Y].Value == -1) mines++;
+            if(coordinates.X < _width - 1)
+                if (Field[coordinates.X + 1, coordinates.Y].Value == -1) mines++;
+            if(coordinates.X > 0 && coordinates.Y < _height - 1)
+                if (Field[coordinates.X - 1, coordinates.Y + 1].Value == -1) mines++;
+            if(coordinates.Y < _height - 1)
+                if (Field[coordinates.X, coordinates.Y + 1].Value == -1) mines++;
+            if(coordinates.X < _width - 1 && coordinates.Y < _height - 1)
+                if (Field[coordinates.X + 1, coordinates.Y + 1].Value == -1) mines++;
             return mines;
         }
         public int GetValue(Point coordinates) => Field[coordinates.X, coordinates.Y].Value;
@@ -77,17 +125,6 @@ namespace MinesweeperWFA
                 for(int j = 0; j<_height; j++)
                 {
                     Field[i, j].Location = new Point(i * 40, j * 40);
-                    switch(Field[i,j].Value)
-                    {
-                        case 0:
-                            Field[i, j].BackColor = Color.Gray; break;
-                        case -1:
-                            Field[i, j].Text = "*"; break;
-                        default:
-                            Field[i, j].ForeColor = Field[i, j].GetTextColor();
-                            Field[i, j].Text = Field[i, j].Value.ToString();
-                            break;
-                    }
                     form.Controls.Add(Field[i, j]);
                 }
             }

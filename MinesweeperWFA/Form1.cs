@@ -12,6 +12,7 @@ namespace MinesweeperWFA
 {
     public partial class Form1 : Form
     {
+        bool isOnGame = false;
         public Form1()
         {
             InitializeComponent();

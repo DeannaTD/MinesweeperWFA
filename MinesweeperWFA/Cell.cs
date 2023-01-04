@@ -10,14 +10,17 @@ namespace MinesweeperWFA
 {
     internal class Cell : Button
     {
-        public CellState State { get; private set; }
+        public CellState State { get; set; }
         public int Value { get; set; }
+        public int X, Y;
 
-        public Cell() : base()
+        public Cell(int X, int Y) : base()
         {
             State = CellState.None;
             Width = 40;
             Height = 40;
+            this.X = X;
+            this.Y = Y;
         }
 
         public Color GetTextColor()

@@ -16,6 +16,8 @@ namespace MinesweeperWFA
         public int MinesCount { get; set; }
         public Size GetSize => new Size(_width, _height);
 
+        private static DateTime prev_click = DateTime.Now;
+        private static DateTime curr_click = prev_click + TimeSpan.FromSeconds(5);
         public Board(int width, int height, int mines)
         {
             _width = width;
@@ -33,11 +35,68 @@ namespace MinesweeperWFA
 
         private void Board_DoubleClick(object sender, EventArgs e)
         {
+            Cell cell = (Cell)sender;
+
+            if (cell.State == CellState.Open)
+            {
+                int minesAround = 0;
+                if (cell.Y > 0)
+                    if (Field[cell.X, cell.Y - 1].State == CellState.Flag) minesAround++;
+                if (cell.X > 0)
+                    if (Field[cell.X - 1, cell.Y].State == CellState.Flag) minesAround++;
+                if (cell.X < _width - 1)
+                    if (Field[cell.X + 1, cell.Y].State == CellState.Flag) minesAround++;
+                if (cell.Y < _height - 1)
+                    if (Field[cell.X, cell.Y + 1].State == CellState.Flag) minesAround++;
+
+                if (cell.X > 0 && cell.Y > 0)
+                    if (Field[cell.X - 1, cell.Y - 1].State == CellState.Flag) minesAround++;
+
+                if (cell.X < _width - 1 && cell.Y > 0)
+                    if (Field[cell.X + 1, cell.Y - 1].State == CellState.Flag) minesAround++;
+
+                if (cell.X > 0 && cell.Y < _height - 1)
+                    if (Field[cell.X - 1, cell.Y + 1].State == CellState.Flag) minesAround++;
+
+                if (cell.X < _width - 1 && cell.Y < _height - 1)
+                    if (Field[cell.X + 1, cell.Y + 1].State == CellState.Flag) minesAround++;
+                if (minesAround >= cell.Value)
+                {
+                    if (cell.Y > 0)
+                        if (Field[cell.X, cell.Y - 1].State != CellState.Open) OpenCellWhileEmpty(cell.X, cell.Y - 1, true);
+                    if (cell.X > 0)
+                        if (Field[cell.X - 1, cell.Y].State != CellState.Open) OpenCellWhileEmpty(cell.X - 1, cell.Y, true);
+                    if (cell.X < _width - 1)
+                        if (Field[cell.X + 1, cell.Y].State != CellState.Open) OpenCellWhileEmpty(cell.X + 1, cell.Y, true);
+                    if (cell.Y < _height - 1)
+                        if (Field[cell.X, cell.Y + 1].State != CellState.Open) OpenCellWhileEmpty(cell.X, cell.Y + 1, true);
+
+                    if (cell.X > 0 && cell.Y > 0)
+                        if (Field[cell.X - 1, cell.Y - 1].State != CellState.Open) OpenCellWhileEmpty(cell.X - 1, cell.Y - 1, true);
+
+                    if (cell.X < _width - 1 && cell.Y > 0)
+                        if (Field[cell.X + 1, cell.Y - 1].State != CellState.Open) OpenCellWhileEmpty(cell.X + 1, cell.Y - 1, true);
+
+                    if (cell.X > 0 && cell.Y < _height - 1)
+                        if (Field[cell.X - 1, cell.Y + 1].State != CellState.Open) OpenCellWhileEmpty(cell.X - 1, cell.Y + 1, true);
+
+                    if (cell.X < _width - 1 && cell.Y < _height - 1)
+                        if (Field[cell.X + 1, cell.Y + 1].State != CellState.Open) OpenCellWhileEmpty(cell.X + 1, cell.Y + 1, true);
+
+                }
+            }
         }
 
         private void Board_MouseDown(object sender, MouseEventArgs e)
         {
-            MessageBox.Show(e.Clicks.ToString());
+            prev_click = curr_click;
+            curr_click = DateTime.Now;
+            if(curr_click - prev_click < TimeSpan.FromMilliseconds(500) && started)
+            {
+                Board_DoubleClick(sender, e);
+                return;
+            }
+
             Cell cell = (Cell)sender;
 
             if (e.Button == MouseButtons.Right)
@@ -72,7 +131,7 @@ namespace MinesweeperWFA
             }
         }
 
-        private void OpenCellWhileEmpty(int i, int j)
+        private void OpenCellWhileEmpty(int i, int j, bool flag = false)
         {
             if (Field[i, j].State == CellState.Flag) return;
             Field[i, j].BackColor = Color.Bisque;
@@ -80,7 +139,7 @@ namespace MinesweeperWFA
                 Field[i, j].Text = Field[i, j].Value.ToString();
             Point coordinates = new Point(i, j);
             Field[i, j].State = CellState.Open;
-            Field[i, j].Enabled = false;
+           // Field[i, j].Enabled = false;
             if (Field[i,j].Value == -1)
             {
                 MessageBox.Show("LOSE");

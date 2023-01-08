@@ -10,6 +10,7 @@ namespace MinesweeperWFA
 {
     internal class Cell : Button
     {
+        public static string Flag = "\u2691";
         public CellState State { get; set; }
         public int Value { get; set; }
         public int X, Y;

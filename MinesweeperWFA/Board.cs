@@ -25,28 +25,62 @@ namespace MinesweeperWFA
                 for (int j = 0; j < _height; j++)
                 {
                     Field[i, j] = new Cell(i, j);
-                    Field[i, j].Click += Board_Click;
+                    Field[i, j].MouseDown += Board_MouseDown;
+                    Field[i, j].DoubleClick += Board_DoubleClick;
                 }
             MinesCount = mines;
         }
 
-        private void Board_Click(object sender, EventArgs e)
+        private void Board_DoubleClick(object sender, EventArgs e)
         {
+        }
+
+        private void Board_MouseDown(object sender, MouseEventArgs e)
+        {
+            MessageBox.Show(e.Clicks.ToString());
             Cell cell = (Cell)sender;
-            if (!started)
+
+            if (e.Button == MouseButtons.Right)
             {
-                Initialize(new Point(cell.X, cell.Y));
-                started = true;
+                MarkFlag(cell.X, cell.Y);
             }
-            OpenCellWhileEmpty(cell.X, cell.Y);
+            else
+            {
+                if (!started)
+                {
+                    Initialize(new Point(cell.X, cell.Y));
+                    started = true;
+                }
+                OpenCellWhileEmpty(cell.X, cell.Y);
+            }
+        }
+
+        private void MarkFlag(int i, int j)
+        {
+            switch(Field[i,j].State)
+            {
+                case CellState.Flag:
+                    Field[i,j].Text = "";
+                    Field[i, j].State = CellState.None;
+                    break;
+                case CellState.None:
+                    Field[i, j].ForeColor = Color.Red;
+                    Field[i, j].Text = Cell.Flag;
+                    Field[i, j].State = CellState.Flag;
+                    break;
+                default: return;
+            }
         }
 
         private void OpenCellWhileEmpty(int i, int j)
         {
-            Field[i, j].Text = Field[i, j].Value.ToString();
-            Point coordinates = new Point(i, j);
+            if (Field[i, j].State == CellState.Flag) return;
             Field[i, j].BackColor = Color.Bisque;
+            if (Field[i,j].Value != 0)
+                Field[i, j].Text = Field[i, j].Value.ToString();
+            Point coordinates = new Point(i, j);
             Field[i, j].State = CellState.Open;
+            Field[i, j].Enabled = false;
             if (Field[i,j].Value == -1)
             {
                 MessageBox.Show("LOSE");
@@ -55,6 +89,7 @@ namespace MinesweeperWFA
             if (Field[i, j].Value != 0) return;
             else
             {
+                Field[i,j].ForeColor = Color.Black;
                 if (coordinates.Y > 0)
                     if(Field[coordinates.X, coordinates.Y - 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X, coordinates.Y - 1);
                 if (coordinates.X > 0)
@@ -63,6 +98,18 @@ namespace MinesweeperWFA
                     if (Field[coordinates.X + 1, coordinates.Y].State != CellState.Open) OpenCellWhileEmpty(coordinates.X + 1, coordinates.Y);
                 if (coordinates.Y < _height - 1)
                     if (Field[coordinates.X, coordinates.Y + 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X, coordinates.Y + 1);
+
+                if (coordinates.X > 0 && coordinates.Y > 0)
+                    if (Field[coordinates.X - 1, coordinates.Y - 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X - 1, coordinates.Y - 1);
+
+                if (coordinates.X < _width - 1 && coordinates.Y > 0)
+                    if (Field[coordinates.X + 1, coordinates.Y - 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X + 1, coordinates.Y - 1);
+
+                if (coordinates.X > 0 && coordinates.Y < _height - 1)
+                    if (Field[coordinates.X - 1, coordinates.Y + 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X - 1, coordinates.Y + 1);
+                
+                if (coordinates.X < _width - 1 && coordinates.Y < _height - 1)
+                    if (Field[coordinates.X + 1, coordinates.Y + 1].State != CellState.Open) OpenCellWhileEmpty(coordinates.X + 1, coordinates.Y + 1);
             }
         }
 
